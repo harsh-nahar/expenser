@@ -1,0 +1,47 @@
+{
+  "accounts": {
+    "example_savings": {
+      "name": "Example Bank Savings",
+      "type": "bank",
+      "last4": "1234"
+    },
+    "example_cc": {
+      "name": "Example Bank CC",
+      "type": "credit_card",
+      "last4": "5678"
+    },
+    "gpay_upi_lite": {
+      "name": "GPay UPI Lite",
+      "type": "upi_lite"
+    }
+  },
+  "categories": [
+    "Food & Dining",
+    "Groceries",
+    "Transport",
+    "Fuel",
+    "Shopping",
+    "Entertainment",
+    "Subscription",
+    "Health & Medical",
+    "Fitness",
+    "Utilities & Bills",
+    "Rent & Housing",
+    "EMI & Loans",
+    "Insurance",
+    "Education",
+    "Travel",
+    "Personal Care",
+    "Gifts & Donations",
+    "Self Transfer",
+    "Cash Withdrawal",
+    "Miscellaneous",
+    "Income",
+    "Investments"
+  ],
+  "merchant_map": {},
+  "budget": {
+    "monthly_limit": 5000,
+    "excluded_categories": ["Rent & Housing", "EMI & Loans", "Income", "Investments", "Self Transfer", "Cash Withdrawal", "Insurance"]
+  }
+}

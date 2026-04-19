@@ -1,0 +1,28 @@
+# Personal files
+plan.md
+resume.md
+sample_sms.txt
+test_sms.js
+sample screenshots/
+
+# Archives and backups
+archive/
+backup/
+
+# macOS
+.DS_Store
+._*
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (if testing locally)
+node_modules/
+package-lock.json
