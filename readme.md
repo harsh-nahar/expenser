@@ -1,5 +1,7 @@
 # Expenser
 
+> **AI Disclosure:** This project - including all scripts, guides, and documentation - was written entirely with AI assistance (Claude by Anthropic, via GitHub Copilot). The author designed the system, tested on-device, and directed development. All code generation, debugging, and documentation was AI-produced.
+
 A privacy-first, fully offline iOS expense tracker built with [Scriptable](https://scriptable.app/) (JavaScript) and thin iOS Shortcuts. Designed for India's payment ecosystem - UPI, multiple bank accounts, credit cards, and UPI Lite.
 
 10 scripts. 4 home screen widgets. Zero network calls.
@@ -8,13 +10,12 @@ A privacy-first, fully offline iOS expense tracker built with [Scriptable](https
 
 - **Auto-log from SMS** - bank transaction SMS parsed automatically via iOS Automation
 - **Auto-log from email** - credit card and bank transaction emails parsed on arrival
-- **OCR receipt scanning** - snap a photo, extract amount via iOS Live Text
+- **Receipt scanning** - snap a photo, extract transaction details using Apple Intelligence (on-device AI models via Shortcuts)
 - **Manual entry** - UPI Lite, cash, or any transaction
 - **Self-learning categories** - learns your merchants over time, auto-categorizes repeat purchases
 - **Budget tracking** - alerts at 80% and 100% of monthly limits
-- **CC balance tracking** - outstanding balance always trends toward ₹0
-- **Daily digest** - 9 PM notification with spending summary, budget warnings, uncategorized review
 - **Home screen widgets** - spending summary, category breakdown, budget progress, trend sparkline
+- **Transaction dashboard** - searchable list with inline editing (category, merchant, amount, account, notes)
 - **Export to CSV** - for spreadsheet analysis
 - **Config-driven** - all account matching uses `config.json`, no hardcoded account numbers in code
 
@@ -28,11 +29,11 @@ The scripts contain no `Request()`, `fetch()`, `eval()`, or `Safari` calls. All 
 
 | Script | Purpose |
 |--------|---------|
-| `Expenser.js` | Main hub - manual entry, receipt scan, view/search transactions, daily digest, manage categories, manage accounts, budget settings, export CSV, help guide |
+| `Expenser.js` | Main hub - manual entry, receipt scan, view/search transactions, manage categories, manage accounts, budget settings, export CSV, help guide |
 | `SMSParser.js` | Auto-parses bank SMS into structured transactions |
 | `EmailParser.js` | Auto-parses bank/CC transaction emails |
 | `BankPatterns.js` | Modular bank pattern definitions (regex patterns for SMS and email parsing) |
-| `ExpenserDash.js` | Transaction dashboard widget with inline editing |
+| `ExpenserDash.js` | Transaction dashboard with inline editing (UITable, not a widget) |
 | `ExpenserWidget.js` | Daily / Weekly / Monthly spending summary widget |
 | `ExpenserCats.js` | Category breakdown widget with bar charts |
 | `ExpenserBudget.js` | Budget progress widget with daily spending hints |
@@ -54,6 +55,14 @@ The scripts contain no `Request()`, `fetch()`, `eval()`, or `Safari` calls. All 
   <img src="screenshots/widgets_dark.jpeg" width="360" alt="Widgets - Dark Mode" />
 </p>
 
+### Transaction Dashboard
+
+<p align="center">
+  <img src="screenshots/dash_1.jpeg" width="320" alt="Dashboard - Overview" />
+  &nbsp;&nbsp;
+  <img src="screenshots/dash_2.jpeg" width="320" alt="Dashboard - Categories and Daily Spending" />
+</p>
+
 ## Supported Banks
 
 Ships with parsing patterns for:
@@ -70,9 +79,8 @@ New banks can be added by creating patterns in `BankPatterns.js`. See [guides/06
 ```
 Bank SMS       → iOS Automation → SMSParser.js    → expenses.json
 Bank Email     → iOS Automation → EmailParser.js   → expenses.json
-Receipt Photo  → Shortcut (OCR) → Expenser.js      → expenses.json
+Receipt Photo  → Shortcut (AI)  → Expenser.js      → expenses.json
 Manual Entry   → Shortcut        → Expenser.js      → expenses.json
-9 PM Daily     → iOS Automation → Expenser.js      → Notification
 Home Screen    → Scriptable      → Widget scripts   → Live display
 ```
 
@@ -90,7 +98,7 @@ expenser/
 │   ├── SMSParser.js        # Auto-parse bank SMS
 │   ├── EmailParser.js      # Auto-parse bank emails
 │   ├── BankPatterns.js     # Modular bank regex patterns
-│   ├── ExpenserDash.js     # Transaction dashboard widget
+│   ├── ExpenserDash.js     # Transaction dashboard (UITable)
 │   ├── ExpenserWidget.js   # Spending summary widget
 │   ├── ExpenserCats.js     # Category breakdown widget
 │   ├── ExpenserBudget.js   # Budget progress widget
@@ -121,10 +129,11 @@ Follow **[guides/00-setup.md](guides/00-setup.md)** for detailed steps. Quick ov
 1. Install [Scriptable](https://apps.apple.com/app/scriptable/id1405459188) (free) from the App Store
 2. Create folder: `iCloud Drive / Scriptable / expenses/`
 3. Copy `config.json` and `expenses.json` from `icloud-samples/` to that folder
-4. Edit `config.json` - add your account last-4 digits and balances
+4. Edit `config.json` - add your account last-4 digits
 5. Copy all 10 scripts from `scripts/` into Scriptable:
    - **Required core (5):** Expenser.js, SMSParser.js, EmailParser.js, BankPatterns.js, ExpenserHelp.js
-   - **Widgets (5, optional but recommended):** ExpenserWidget.js, ExpenserCats.js, ExpenserBudget.js, ExpenserMoM.js, ExpenserDash.js
+   - **Dashboard (1):** ExpenserDash.js (run from Scriptable app, not a widget)
+   - **Widgets (4, optional but recommended):** ExpenserWidget.js, ExpenserCats.js, ExpenserBudget.js, ExpenserMoM.js
 6. Create a file bookmark named `expenser` in Scriptable settings pointing to the expenses folder
 7. Edit self-transfer regex: open SMSParser.js and EmailParser.js and replace `your name here` with your actual name
 8. Build the iOS Shortcuts and Automations using the setup guides
@@ -137,8 +146,8 @@ Follow **[guides/00-setup.md](guides/00-setup.md)** for detailed steps. Quick ov
 | [00-setup.md](guides/00-setup.md) | Install Scriptable, configure files and bookmark |
 | [01-expenser-hub-shortcut.md](guides/01-expenser-hub-shortcut.md) | Main Expenser launcher shortcut |
 | [02-sms-automation.md](guides/02-sms-automation.md) | Auto-log bank SMS via iOS Automation |
-| [03-daily-digest.md](guides/03-daily-digest.md) | 9 PM daily summary notification |
-| [04-scan-receipt.md](guides/04-scan-receipt.md) | OCR receipt scanner shortcut |
+| [03-daily-digest.md](guides/03-daily-digest.md) | 9 PM daily summary notification (optional) |
+| [04-scan-receipt.md](guides/04-scan-receipt.md) | Receipt scanner shortcut (uses Apple Intelligence) |
 | [05-email-automation.md](guides/05-email-automation.md) | Auto-log bank/CC emails |
 | [06-add-bank-patterns.md](guides/06-add-bank-patterns.md) | AI-assisted guide to add new bank patterns |
 
@@ -187,20 +196,19 @@ Example structure (replace with your own values):
 ### What works
 
 - **Expenser Hub shortcut** - launches Expenser.js via `scriptable:///run/Expenser` URL scheme. All interactive features (alerts, menus, tables) work because Scriptable opens as the foreground app.
-- **SMS automation** - triggers on incoming bank SMS using "Message Contains" filter (e.g., `debited` or `credited`). Runs SMSParser.js via the Shortcuts "Run Script" action. Works in background since parsers only use Notifications, not Alerts.
-- **Email automation** - iOS "When I get an email" trigger fires on bank transaction emails. Runs EmailParser.js. Supports filtering by sender address.
-- **Daily digest automation** - 9 PM time-based trigger runs Expenser.js digest mode via Notification.
-- **Receipt scan shortcut** - takes photo, extracts text via iOS Live Text OCR, passes to Expenser.js.
+- **SMS automation** - triggers on incoming bank SMS using "Message Contains" filter (e.g., `debited` or `credited`). Runs SMSParser.js via the Shortcuts "Run Script" action. Works in background since parsers only use Notifications, not Alerts. Note: the SMS Sender field does not work reliably on iOS - use "Message Contains" instead.
+- **Email automation** - iOS "When I get an email" trigger fires on bank transaction emails. Runs EmailParser.js. Filter by sender address.
+- **Receipt scan shortcut** - takes photo, extracts text using Apple Intelligence (on-device AI models), passes to Expenser.js for parsing.
 - **Home screen widgets** - Scriptable natively supports small/medium/large widgets. Each widget script uses `config.widgetFamily` to adapt layout.
 
 ### Known limitations
 
 - **Scriptable "Run Script" action runs in Siri context** - `Alert()`, `UITable`, and text input all crash with "Alerts are not supported in Siri". This is why the Hub shortcut uses the URL scheme (`scriptable:///run/Expenser`) instead - it opens the app in foreground.
-- **SMS Sender field is unreliable** - iOS can strip hyphens from bank sender IDs (e.g., `AX-AXISBK-S` becomes `AXISBKS`), causing sender-based triggers to fail. Use "Message Contains" with keywords like `debited`, `credited`, or your account's last 4 digits instead.
+- **SMS Sender field does not work** - iOS strips hyphens from bank sender IDs (e.g., `AX-AXISBK-S` becomes `AXISBKS`), so sender-based triggers fail. Use "Message Contains" with keywords like `debited`, `credited`, or your account's last 4 digits instead.
 - **Email automation may pass empty content** - some iOS versions don't reliably pass email body text to Shortcuts. If this happens, the parser logs a debug notification to help diagnose.
 - **UPI Lite transactions don't generate SMS or email** - GPay UPI Lite payments are silent. Use manual entry or receipt scan for these.
 - **Automation requires device unlock** - iOS SMS/email automations that access iCloud files need the device to be unlocked. If locked, the automation queues until next unlock.
-- **"Run Immediately" requires iOS 15.4+** - older iOS versions show a confirmation prompt before running automations.
+- **Automations either run immediately or not at all** - there is no "ask before running" toggle. Set automations to "Run Immediately" or they won't fire.
 - **Not all banks are covered** - ships with patterns for HSBC, Axis, HDFC, and ICICI. Other banks need custom patterns (see [guides/06-add-bank-patterns.md](guides/06-add-bank-patterns.md)).
 
 ## Contributing
@@ -232,7 +240,3 @@ Please open an issue to discuss significant changes before submitting a pull req
 ## Disclaimer
 
 Bank names mentioned (HSBC, Axis, HDFC, ICICI) are trademarks of their respective owners. Expenser is not affiliated with, endorsed by, or connected to any financial institution.
-
-## AI Disclosure
-
-This project - including all scripts, guides, and documentation - was written entirely with AI assistance (Claude by Anthropic, via GitHub Copilot). The author designed the system, tested on-device, and directed development. All code generation, debugging, and documentation was AI-produced.
