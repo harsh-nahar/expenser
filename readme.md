@@ -211,9 +211,9 @@ If your bank isn't supported, you can help by submitting masked SMS/email sample
 
 **[Submit Bank Samples](YOUR_GOOGLE_FORM_LINK_HERE)** (replace this link after creating the form)
 
-See [reference/sms-patterns.md](reference/sms-patterns.md) for examples of what existing bank patterns look like - this shows the exact SMS/email formats we use to build parsing logic.
+See [reference/sms-patterns.md](reference/sms-patterns.md) for examples of what existing bank patterns look like - this shows the exact SMS/email formats used to build parsing logic.
 
-We use your samples to build parsing patterns. All personal information must be masked before submission - the form includes detailed masking instructions.
+Your samples are used to build parsing patterns. All personal information must be masked before submission - the form includes detailed masking instructions.
 
 You can also add patterns yourself - see [guides/06-add-bank-patterns.md](guides/06-add-bank-patterns.md) for an AI-assisted walkthrough.
 
@@ -232,3 +232,7 @@ Please open an issue to discuss significant changes before submitting a pull req
 ## Disclaimer
 
 Bank names mentioned (HSBC, Axis, HDFC, ICICI) are trademarks of their respective owners. Expenser is not affiliated with, endorsed by, or connected to any financial institution.
+
+## AI Disclosure
+
+This project - including all scripts, guides, and documentation - was written entirely with AI assistance (Claude by Anthropic, via GitHub Copilot). The author designed the system, tested on-device, and directed development. All code generation, debugging, and documentation was AI-produced.

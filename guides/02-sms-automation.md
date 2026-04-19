@@ -28,7 +28,7 @@ Bank SMS arrives
 | `ICICIT` | ICICI Amazon CC |
 | `JX-ICICIT` | ICICI CC (standing instruction processed) |
 
-> **Note:** `HSBCIM` is HSBC maintenance notices - we don't set up automation for it.
+> **Note:** `HSBCIM` is HSBC maintenance notices - automation is not needed for it.
 
 ---
 

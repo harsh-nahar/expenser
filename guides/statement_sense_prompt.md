@@ -133,7 +133,7 @@ statement-sense/
 **Axis Bank Savings Statement** typically has:
 - Date | Particulars | Chq/Ref No | Withdrawal | Deposit | Balance
 
-I'll provide actual sample PDFs as we go. Start by setting up the project structure and building the HDFC CC parser first, then we'll expand.
+Actual sample PDFs will be provided as input. Start by setting up the project structure and building the HDFC CC parser first, then expand.
 ```
 
 ---
