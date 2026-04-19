@@ -71,7 +71,6 @@ Use the URL scheme with a command parameter for direct access:
 | Guide | What | Why Shortcuts? |
 |-------|------|----------------|
 | [02-sms-automation.md](02-sms-automation.md) | Auto-log bank SMS | SMS trigger only exists in Shortcuts |
-| [03-daily-digest.md](03-daily-digest.md) | 9 PM daily summary | Time trigger only exists in Shortcuts |
 | [04-scan-receipt.md](04-scan-receipt.md) | OCR receipt scan | Camera + OCR only in Shortcuts |
 | [05-email-automation.md](05-email-automation.md) | Auto-log bank/CC emails | Email trigger only exists in Shortcuts |
 

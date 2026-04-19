@@ -185,4 +185,4 @@ Over time, your `merchant_map` in config.json learns your merchants.
 
 ---
 
-**Next:** [03-daily-digest.md](03-daily-digest.md) - automatic 9 PM daily summary
+**Next:** [04-scan-receipt.md](04-scan-receipt.md) - receipt scanner using Apple Intelligence

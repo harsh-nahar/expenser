@@ -281,7 +281,6 @@ Now build the iOS Shortcuts that call these scripts:
 |-------|----------------|
 | [01-expenser-hub-shortcut.md](01-expenser-hub-shortcut.md) | Main Expenser shortcut (home screen / Siri) |
 | [02-sms-automation.md](02-sms-automation.md) | Auto-log bank SMS transactions |
-| [03-daily-digest.md](03-daily-digest.md) | 9 PM daily summary notification |
 | [04-scan-receipt.md](04-scan-receipt.md) | OCR receipt scanner shortcut |
 | [05-email-automation.md](05-email-automation.md) | Auto-log bank/CC emails |
 

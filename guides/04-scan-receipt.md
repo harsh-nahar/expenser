@@ -138,5 +138,4 @@ Here's what you've built so far:
 |---------------------|---------|---------|
 | Expenser Hub | 1-2 | Home screen / Siri / Widget |
 | SMS Automation (×5) | 4 each | Incoming bank SMS |
-| Daily Digest | 3 | 9 PM daily |
 | Scan Receipt | 5-6 | Manual tap |

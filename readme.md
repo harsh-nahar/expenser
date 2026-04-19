@@ -108,7 +108,6 @@ expenser/
 │   ├── 00-setup.md
 │   ├── 01-expenser-hub-shortcut.md
 │   ├── 02-sms-automation.md
-│   ├── 03-daily-digest.md
 │   ├── 04-scan-receipt.md
 │   ├── 05-email-automation.md
 │   ├── 06-add-bank-patterns.md
@@ -146,7 +145,6 @@ Follow **[guides/00-setup.md](guides/00-setup.md)** for detailed steps. Quick ov
 | [00-setup.md](guides/00-setup.md) | Install Scriptable, configure files and bookmark |
 | [01-expenser-hub-shortcut.md](guides/01-expenser-hub-shortcut.md) | Main Expenser launcher shortcut |
 | [02-sms-automation.md](guides/02-sms-automation.md) | Auto-log bank SMS via iOS Automation |
-| [03-daily-digest.md](guides/03-daily-digest.md) | 9 PM daily summary notification (optional) |
 | [04-scan-receipt.md](guides/04-scan-receipt.md) | Receipt scanner shortcut (uses Apple Intelligence) |
 | [05-email-automation.md](guides/05-email-automation.md) | Auto-log bank/CC emails |
 | [06-add-bank-patterns.md](guides/06-add-bank-patterns.md) | AI-assisted guide to add new bank patterns |
