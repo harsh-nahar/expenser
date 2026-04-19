@@ -10,7 +10,7 @@ A privacy-first, fully offline iOS expense tracker built with [Scriptable](https
 
 - **Auto-log from SMS** - bank transaction SMS parsed automatically via iOS Automation
 - **Auto-log from email** - credit card and bank transaction emails parsed on arrival
-- **Receipt scanning** - snap a photo, extract transaction details using Apple Intelligence (on-device AI models via Shortcuts)
+- **Receipt scanning** - snap a photo, extract transaction details using Apple Intelligence (via Private Cloud Compute in Shortcuts)
 - **Manual entry** - UPI Lite, cash, or any transaction
 - **Self-learning categories** - learns your merchants over time, auto-categorizes repeat purchases
 - **Budget tracking** - alerts at 80% and 100% of monthly limits
@@ -21,7 +21,7 @@ A privacy-first, fully offline iOS expense tracker built with [Scriptable](https
 
 ## Privacy
 
-**100% offline.** Zero network calls, zero cloud services, zero third-party data sharing. Your financial data stays on your device and your own iCloud Drive.
+**Privacy-first.** All transaction parsing, storage, and display happens locally in Scriptable's JavaScript runtime. Zero third-party data sharing. Your financial data stays on your device and your own iCloud Drive. The one exception is receipt scanning, which sends the photo to Apple's Private Cloud Compute for AI text extraction (Apple states this data is not retained or used for training).
 
 The scripts contain no `Request()`, `fetch()`, `eval()`, or `Safari` calls. All processing happens locally in Scriptable's JavaScript runtime.
 
@@ -196,7 +196,7 @@ Example structure (replace with your own values):
 - **Expenser Hub shortcut** - launches Expenser.js via `scriptable:///run/Expenser` URL scheme. All interactive features (alerts, menus, tables) work because Scriptable opens as the foreground app.
 - **SMS automation** - triggers on incoming bank SMS using "Message Contains" filter (e.g., `debited` or `credited`). Runs SMSParser.js via the Shortcuts "Run Script" action. Works in background since parsers only use Notifications, not Alerts. Note: the SMS Sender field does not work reliably on iOS - use "Message Contains" instead.
 - **Email automation** - iOS "When I get an email" trigger fires on bank transaction emails. Runs EmailParser.js. Filter by sender address.
-- **Receipt scan shortcut** - takes photo, extracts text using Apple Intelligence (on-device AI models), passes to Expenser.js for parsing.
+- **Receipt scan shortcut** - takes photo, sends it to Apple Intelligence via Private Cloud Compute with a prompt to extract transaction details, then passes the AI response to Expenser.js for parsing. This is the only part where data leaves the device.
 - **Home screen widgets** - Scriptable natively supports small/medium/large widgets. Each widget script uses `config.widgetFamily` to adapt layout.
 
 ### Known limitations
