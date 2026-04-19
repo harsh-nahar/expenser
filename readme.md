@@ -211,7 +211,9 @@ If your bank isn't supported, you can help by submitting masked SMS/email sample
 
 **[Submit Bank Samples](YOUR_GOOGLE_FORM_LINK_HERE)** (replace this link after creating the form)
 
-We use your samples to build parsing patterns. All personal information must be masked before submission - the form includes detailed masking instructions. See [guides/bank-submission-form.md](guides/bank-submission-form.md) for the full form setup.
+See [reference/sms-patterns.md](reference/sms-patterns.md) for examples of what existing bank patterns look like - this shows the exact SMS/email formats we use to build parsing logic.
+
+We use your samples to build parsing patterns. All personal information must be masked before submission - the form includes detailed masking instructions.
 
 You can also add patterns yourself - see [guides/06-add-bank-patterns.md](guides/06-add-bank-patterns.md) for an AI-assisted walkthrough.
 
