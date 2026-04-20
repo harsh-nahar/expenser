@@ -215,7 +215,7 @@ Example structure (replace with your own values):
 
 If your bank isn't supported, you can help by submitting masked SMS/email samples:
 
-**[Submit Bank Samples](YOUR_GOOGLE_FORM_LINK_HERE)** (replace this link after creating the form)
+**[Submit Bank Samples](https://forms.gle/WxRRWs3BnxpMbVL76)**
 
 See [reference/sms-patterns.md](reference/sms-patterns.md) for examples of what existing bank patterns look like - this shows the exact SMS/email formats used to build parsing logic.
 
