@@ -73,6 +73,7 @@ async function pickPeriod() {
   a.addAction("Last 30 Days");
   a.addAction("This Year");
   a.addAction("All Time");
+  a.addAction("Custom Range");
   a.addCancelAction("Cancel");
   let idx = await a.presentAlert();
   if (idx < 0) return null;
@@ -90,7 +91,26 @@ async function pickPeriod() {
   else if (idx === 2) { start = df.string(new Date(y, m, 1)); label = "This Month"; }
   else if (idx === 3) { start = df.string(new Date(y, m, d - 30)); label = "Last 30 Days"; }
   else if (idx === 4) { start = y + "-01-01"; label = "This Year"; }
-  else { start = "2000-01-01"; label = "All Time"; }
+  else if (idx === 5) { start = "2000-01-01"; label = "All Time"; }
+  else if (idx === 6) {
+    let sa = new Alert();
+    sa.title = "From Date";
+    sa.message = "Format: YYYY-MM-DD (e.g. 2026-01-01)";
+    sa.addTextField("From", df.string(new Date(y, m, 1)));
+    sa.addAction("Next");
+    sa.addCancelAction("Cancel");
+    if ((await sa.presentAlert()) !== 0) return null;
+    start = sa.textFieldValue(0).trim();
+    let ea = new Alert();
+    ea.title = "To Date";
+    ea.message = "Format: YYYY-MM-DD (e.g. 2026-05-04)";
+    ea.addTextField("To", todayStr());
+    ea.addAction("Done");
+    ea.addCancelAction("Cancel");
+    if ((await ea.presentAlert()) !== 0) return null;
+    let end = ea.textFieldValue(0).trim();
+    return { start, end, label: start + " to " + end };
+  }
   return { start, end: todayStr(), label };
 }
 
@@ -221,10 +241,11 @@ async function showDashboard(period) {
   }
 
   // Recent transactions
-  let recent = filtered.sort((a, b) => (b.date + (b.time || "")).localeCompare(a.date + (a.time || ""))).slice(0, 20);
+  let recent = filtered.sort((a, b) => (b.date + (b.time || "")).localeCompare(a.date + (a.time || "")));
   if (recent.length > 0) {
-    addSection(table, "Recent Transactions");
-    recent.forEach(tx => {
+    let showCount = 50;
+    addSection(table, "Recent Transactions (" + recent.length + ")");
+    recent.slice(0, showCount).forEach(tx => {
       let row = new UITableRow();
       row.height = 52;
       let isDebit = tx.type === "debit" || (!tx.type && tx.amount > 0);
@@ -245,10 +266,29 @@ async function showDashboard(period) {
       row.onSelect = async () => { await editTx(tx); };
       table.addRow(row);
     });
+    if (recent.length > showCount) {
+      let moreRow = new UITableRow();
+      moreRow.height = 44;
+      let moreCell = moreRow.addText("Show All (" + recent.length + " transactions)");
+      moreCell.titleFont = Font.systemFont(15);
+      moreCell.titleColor = new Color("#007aff");
+      moreRow.dismissOnSelect = false;
+      moreRow.onSelect = async () => { await showAllTxns(recent); };
+      table.addRow(moreRow);
+    }
   }
 
   // Actions
   addSection(table, "Actions");
+
+  let searchRow = new UITableRow();
+  searchRow.height = 44;
+  let searchCell = searchRow.addText("Search");
+  searchCell.titleFont = Font.systemFont(16);
+  searchCell.titleColor = new Color("#007aff");
+  searchRow.dismissOnSelect = false;
+  searchRow.onSelect = async () => { await searchTxns(); };
+  table.addRow(searchRow);
 
   let cpRow = new UITableRow();
   cpRow.height = 44;
@@ -263,6 +303,103 @@ async function showDashboard(period) {
   table.addRow(cpRow);
 
   await table.present(false);
+}
+
+async function searchTxns() {
+  let sa = new Alert();
+  sa.title = "Search";
+  sa.message = "Searches merchant names, categories, and notes";
+  sa.addTextField("Search term", "");
+  sa.addAction("Search");
+  sa.addCancelAction("Cancel");
+  if ((await sa.presentAlert()) !== 0) return;
+  let query = (sa.textFieldValue(0) || "").trim().toLowerCase();
+  if (!query) return;
+
+  let results = expenses.filter(e => {
+    let merchant = (e.merchant || "").toLowerCase();
+    let category = (e.category || "").toLowerCase();
+    let note = (e.note || "").toLowerCase();
+    return merchant.includes(query) || category.includes(query) || note.includes(query);
+  }).sort((a, b) => (b.date + (b.time || "")).localeCompare(a.date + (a.time || "")));
+
+  if (results.length === 0) {
+    let na = new Alert(); na.title = "No results"; na.message = "Nothing matched \"" + query + "\""; na.addAction("OK"); await na.presentAlert();
+    return;
+  }
+
+  let total = results.reduce((s, e) => s + (e.amount || 0), 0);
+  let dt = new UITable();
+  dt.showSeparators = true;
+
+  let hdr = new UITableRow();
+  hdr.isHeader = true;
+  hdr.height = 54;
+  let hdrCell = hdr.addText("\"" + query + "\"", results.length + " results \u2022 \u20B9" + fmt(total));
+  hdrCell.titleFont = Font.boldSystemFont(18);
+  hdrCell.subtitleFont = Font.systemFont(13);
+  hdrCell.subtitleColor = Color.gray();
+  dt.addRow(hdr);
+
+  results.forEach(tx => {
+    let row = new UITableRow();
+    row.height = 52;
+    let isDebit = tx.type === "debit" || (!tx.type && tx.amount > 0);
+    let sign = isDebit ? "-" : "+";
+    let label = tx.merchant || tx.category || "Unknown";
+    let sub = friendlyDate(tx.date) + " " + (tx.time || "") + "  " + (tx.category || "") + "  " + acctName(tx.account);
+    let nameCell = row.addText(label, sub);
+    nameCell.titleFont = Font.systemFont(15);
+    nameCell.subtitleFont = Font.systemFont(11);
+    nameCell.subtitleColor = Color.gray();
+    nameCell.widthWeight = 65;
+    let amtCell = row.addText(sign + "\u20B9" + fmt(tx.amount));
+    amtCell.titleFont = Font.mediumSystemFont(15);
+    amtCell.titleColor = isDebit ? Color.red() : new Color("#34c759");
+    amtCell.rightAligned();
+    amtCell.widthWeight = 35;
+    row.dismissOnSelect = false;
+    row.onSelect = async () => { await editTx(tx); };
+    dt.addRow(row);
+  });
+
+  await dt.present(false);
+}
+
+async function showAllTxns(txns) {
+  let dt = new UITable();
+  dt.showSeparators = true;
+
+  let hdr = new UITableRow();
+  hdr.isHeader = true;
+  hdr.height = 44;
+  let hdrCell = hdr.addText("All Transactions (" + txns.length + ")");
+  hdrCell.titleFont = Font.boldSystemFont(16);
+  dt.addRow(hdr);
+
+  txns.forEach(tx => {
+    let row = new UITableRow();
+    row.height = 52;
+    let isDebit = tx.type === "debit" || (!tx.type && tx.amount > 0);
+    let sign = isDebit ? "-" : "+";
+    let label = tx.merchant || tx.category || "Unknown";
+    let sub = friendlyDate(tx.date) + " " + (tx.time || "") + "  " + (tx.category || "") + "  " + acctName(tx.account);
+    let nameCell = row.addText(label, sub);
+    nameCell.titleFont = Font.systemFont(15);
+    nameCell.subtitleFont = Font.systemFont(11);
+    nameCell.subtitleColor = Color.gray();
+    nameCell.widthWeight = 65;
+    let amtCell = row.addText(sign + "\u20B9" + fmt(tx.amount));
+    amtCell.titleFont = Font.mediumSystemFont(15);
+    amtCell.titleColor = isDebit ? Color.red() : new Color("#34c759");
+    amtCell.rightAligned();
+    amtCell.widthWeight = 35;
+    row.dismissOnSelect = false;
+    row.onSelect = async () => { await editTx(tx); };
+    dt.addRow(row);
+  });
+
+  await dt.present(false);
 }
 
 async function showDrillDown(filterValue, filterType, periodFiltered) {

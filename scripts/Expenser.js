@@ -1,10 +1,7 @@
-// Variables used by Scriptable.
-// These must be at the very top of the file. Do not edit.
-// icon-color: pink; icon-glyph: magic;
 // ============================================================
-// Expenser.js — Pure Expense Tracker for Scriptable (iOS)
+// Expenser.js - Pure Expense Tracker for Scriptable (iOS)
 // Triggered via iOS Shortcuts or run directly in Scriptable
-// ZERO network calls — fully offline, iCloud sync only
+// ZERO network calls - fully offline, iCloud sync only
 // ============================================================
 
 // --- File Path Setup ---
@@ -292,19 +289,9 @@ async function quickEntry() {
 
   let note = await promptText("Note (optional)", "Any notes") || "";
 
-  let dateStr = await promptText("Date (optional)", "YYYY-MM-DD, leave blank for today") || "";
-  let txnDate = todayStr();
-  if (dateStr.trim()) {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr.trim())) {
-      txnDate = dateStr.trim();
-    } else {
-      let e = new Alert(); e.title = "Invalid date format"; e.message = "Using today instead. Format: YYYY-MM-DD"; e.addAction("OK"); await e.presentAlert();
-    }
-  }
-
   let txn = {
     id: generateId(),
-    date: txnDate,
+    date: todayStr(),
     time: nowTimeStr(),
     amount: amount,
     type: txnType,
@@ -319,46 +306,7 @@ async function quickEntry() {
   await saveExpenses(expenses);
 
   let acctName = config.accounts[accountKey].name;
-  let msg = `${formatCurrency(amount)} ${txnType} — ${acctName} (${category})`;
-  await showNotification(msg);
-  Script.setShortcutOutput(msg);
-}
-
-// Quick entry with pre-filled date from Shortcuts JSON: {"cmd":"quick_entry","date":"2026-05-01","amount":500,"merchant":"Swiggy","account":"hdfc_savings","category":"Food & Dining","type":"debit"}
-async function quickEntryWithDate(params) {
-  let config = await loadConfig();
-  let expenses = await loadExpenses();
-
-  let amount = parseFloat(params.amount);
-  if (!amount || amount <= 0) { await quickEntry(); return; }
-
-  let txnDate = params.date || todayStr();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(txnDate)) txnDate = todayStr();
-
-  let accountKey = params.account || Object.keys(config.accounts || {})[0] || "default";
-  let category = params.category || categorize(params.merchant || "", config);
-  let merchant = params.merchant || "";
-  let txnType = params.type || "debit";
-  let note = params.note || "";
-
-  let txn = {
-    id: generateId(),
-    date: txnDate,
-    time: nowTimeStr(),
-    amount: amount,
-    type: txnType,
-    category: category,
-    merchant: merchant,
-    account: accountKey,
-    source: "manual",
-    note: note
-  };
-
-  expenses.push(txn);
-  await saveExpenses(expenses);
-
-  let acctLabel = config.accounts[accountKey] ? config.accounts[accountKey].name : accountKey;
-  let msg = `${formatCurrency(amount)} ${txnType} on ${txnDate} — ${acctLabel} (${category})`;
+  let msg = `${formatCurrency(amount)} ${txnType} - ${acctName} (${category})`;
   await showNotification(msg);
   Script.setShortcutOutput(msg);
 }
@@ -440,6 +388,7 @@ function parseReceiptText(ocrText) {
   // General patterns
   if (!merchant) {
     let merchantPatterns = [
+      /(?:paid\s+to|sent\s+to|transferred\s+to)\s+([A-Za-z][A-Za-z\s.&']+?)\s+on\s+\d/i,
       /(?:paid\s+to|sent\s+to|transferred\s+to)\s+([A-Z][A-Za-z\s.]+)/,
       /^To\s+([A-Z][A-Za-z\s.]+)/m,
       /(?:at|from)\s+([A-Z][A-Za-z\s.&']+)/,
@@ -486,26 +435,37 @@ function parseReceiptText(ocrText) {
 
   // Clean merchant: strip trailing junk words
   merchant = merchant.replace(/\s*(?:Not you|Trxn|Call\s|Visit\s).*/i, "").trim();
+  merchant = merchant.replace(/\s+on$/i, "").trim();
   // Limit to first 3-4 meaningful words
   let mWords = merchant.split(/\s+/).filter(w => /[A-Za-z]/.test(w)).slice(0, 4).join(" ");
   if (mWords.length >= 3) merchant = mWords;
 
   // --- Account detection (from OCR text) ---
+  // Matches account names/last4 from your config.json automatically.
   let account = "";
   if (/UPI\s*Lite/i.test(ocrText)) {
-    account = "gpay_upi_lite";
-  } else if (/HSBC\s*(?:BANK\s*)?CREDIT\s*CARD|XXXXXX?79|ending\s*9279/i.test(ocrText)) {
-    account = "hsbc_rupay_cc";
-  } else if (/Axis\s*Bank\s*5727|XX5727/i.test(ocrText)) {
-    account = "axis_savings";
-  } else if (/HDFC.*(?:5065|savings)/i.test(ocrText)) {
-    account = "hdfc_savings";
-  } else if (/HDFC.*(?:3797|regalia|credit)/i.test(ocrText)) {
-    account = "hdfc_regalia_cc";
-  } else if (/ICICI.*(?:9004|amazon|credit)/i.test(ocrText)) {
-    account = "icici_amazon_cc";
-  } else if (/HSBC.*(?:7006|savings)/i.test(ocrText)) {
-    account = "hsbc_savings";
+    // Find any upi_lite account in config
+    for (let [k, v] of Object.entries(config.accounts || {})) {
+      if (v.type === "upi_lite") { account = k; break; }
+    }
+  } else {
+    // Try to match by last4 digits found in OCR text
+    let last4Match = ocrText.match(/(?:ending|last\s*4|x{2,4}|[*]{2,4})[\s:]*(\d{4})/i);
+    if (last4Match) {
+      for (let [k, v] of Object.entries(config.accounts || {})) {
+        if (v.last4 === last4Match[1]) { account = k; break; }
+      }
+    }
+    // Fallback: match by account name keywords in OCR text
+    if (!account) {
+      let lower = ocrText.toLowerCase();
+      for (let [k, v] of Object.entries(config.accounts || {})) {
+        let words = (v.name || "").toLowerCase().split(/\s+/);
+        if (words.length >= 1 && words.some(w => w.length > 2 && lower.includes(w))) {
+          account = k; break;
+        }
+      }
+    }
   }
 
   // --- Date ---
@@ -584,9 +544,9 @@ async function scanReceipt(ocrText, fromShortcut) {
     expenses.push(txn);
     await saveExpenses(expenses);
 
-    let msg = `Logged: ${formatCurrency(amount)} — ${merchant || "Unknown"} (${category}) [${acctDisplayName(config, accountKey)}]`;
+    let msg = `Logged: ${formatCurrency(amount)} - ${merchant || "Unknown"} (${category}) [${acctDisplayName(config, accountKey)}]`;
     let n = new Notification();
-    n.title = "Expenser — Scan Logged";
+    n.title = "Expenser - Scan Logged";
     n.body = msg;
     n.sound = "default";
     await n.schedule();
@@ -650,7 +610,7 @@ async function scanReceipt(ocrText, fromShortcut) {
   expenses.push(txn);
   await saveExpenses(expenses);
 
-  let msg = `Scanned: ${formatCurrency(amount)} — ${merchant} (${category})`;
+  let msg = `Scanned: ${formatCurrency(amount)} - ${merchant} (${category})`;
   await showNotification(msg);
   Script.setShortcutOutput(msg);
 }
@@ -725,7 +685,6 @@ async function editTransaction(config, expenses, index) {
   a.addAction("Change Merchant");
   a.addAction("Change Amount");
   a.addAction("Change Account");
-  a.addAction("Change Date");
   a.addAction("Change Note");
   a.addDestructiveAction("Delete");
   a.addCancelAction("Cancel");
@@ -759,20 +718,10 @@ async function editTransaction(config, expenses, index) {
     let newKey = acctKeys[acctNames.indexOf(pick)];
     tx.account = newKey;
   } else if (idx === 4) {
-    let newDate = await promptText("New Date", "YYYY-MM-DD", tx.date);
-    if (newDate === null) return;
-    newDate = newDate.trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
-      tx.date = newDate;
-    } else {
-      let err = new Alert(); err.title = "Invalid format"; err.message = "Use YYYY-MM-DD"; err.addAction("OK"); await err.presentAlert();
-      return;
-    }
-  } else if (idx === 5) {
     let newNote = await promptText("New Note", "Note", tx.note);
     if (newNote === null) return;
     tx.note = newNote;
-  } else if (idx === 6) {
+  } else if (idx === 5) {
     let sure = await confirm("Delete?", `Remove ${formatCurrency(tx.amount)} ${tx.category}?`);
     if (!sure) return;
     expenses.splice(index, 1);
@@ -920,7 +869,7 @@ async function manageAccounts() {
   let options = keys.map(k => {
     let a = config.accounts[k];
     let typeLabel = a.type === "credit_card" ? "CC" : a.type === "upi_lite" ? "UPI Lite" : "Savings";
-    return `${a.name || k} (${a.last4 || "—"}) [${typeLabel}]`;
+    return `${a.name || k} (${a.last4 || "-"}) [${typeLabel}]`;
   });
   options.push("➕ Add New Account");
 
@@ -986,7 +935,7 @@ async function manageAccounts() {
 
     let editAlert = new Alert();
     editAlert.title = acct.name || key;
-    editAlert.message = `Last 4: ${acct.last4 || "—"}\nType: ${acct.type || "bank"}`;
+    editAlert.message = `Last 4: ${acct.last4 || "-"}\nType: ${acct.type || "bank"}`;
     editAlert.addAction("Rename");
     editAlert.addAction("Change Last 4 Digits");
     editAlert.destructiveAction = 2;
@@ -1112,10 +1061,6 @@ async function main() {
       let parsed = JSON.parse(input);
       if (parsed.cmd === "scan") {
         await scanReceipt(parsed.text || "", true);
-        return;
-      }
-      if (parsed.cmd === "quick_entry" && parsed.date) {
-        await quickEntryWithDate(parsed);
         return;
       }
       input = parsed.cmd || "";
