@@ -1,8 +1,11 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: blue; icon-glyph: chart-bar;
+// Variables used by Scriptable.
+// These must be at the very top of the file. Do not edit.
+// icon-color: blue; icon-glyph: chart-bar;
 
-// ExpenserDash.js - Native UITable expense dashboard for Scriptable
+// ExpenserDash.js — Native UITable expense dashboard for Scriptable
 
 const fm = FileManager.iCloud();
 let BASE;
@@ -116,7 +119,7 @@ async function showDashboard(period) {
   addKV(table, "Spent", "\u20B9" + fmt(totalSpent), Color.red());
   addKV(table, "Transactions", String(filtered.length));
 
-  // Budget - only show for "This Month" period
+  // Budget — only show for "This Month" period
   let budgetCfg = CONFIG.budget || {};
   let budgetLimit = budgetCfg.monthly_limit || 0;
   let excludedCats = budgetCfg.excluded_categories || ["Rent & Housing","EMI & Loans","Income","Investments","Self Transfer","Cash Withdrawal","Insurance"];
@@ -149,7 +152,7 @@ async function showDashboard(period) {
   let allDebitTotal = debits.reduce((s, e) => s + (e.amount || 0), 0);
   let sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
   if (sortedCats.length > 0) {
-    addSection(table, "Categories");
+    addSection(table, "Categories (tap to drill down)");
     sortedCats.forEach(([cat, total]) => {
       let pct = allDebitTotal > 0 ? Math.round(total / allDebitTotal * 100) : 0;
       let row = new UITableRow();
@@ -163,6 +166,8 @@ async function showDashboard(period) {
       amtCell.titleFont = Font.mediumSystemFont(15);
       amtCell.rightAligned();
       amtCell.widthWeight = 35;
+      row.dismissOnSelect = false;
+      row.onSelect = async () => { await showDrillDown(cat, "category", filtered); };
       table.addRow(row);
     });
   }
@@ -172,7 +177,7 @@ async function showDashboard(period) {
   debits.forEach(e => { let a = e.account || "Default"; acctTotals[a] = (acctTotals[a] || 0) + (e.amount || 0); });
   let sortedAccts = Object.entries(acctTotals).sort((a, b) => b[1] - a[1]);
   if (sortedAccts.length > 0) {
-    addSection(table, "By Account");
+    addSection(table, "By Account (tap to drill down)");
     sortedAccts.forEach(([acc, total]) => {
       let row = new UITableRow();
       row.height = 44;
@@ -183,6 +188,8 @@ async function showDashboard(period) {
       amtCell.titleFont = Font.mediumSystemFont(15);
       amtCell.rightAligned();
       amtCell.widthWeight = 35;
+      row.dismissOnSelect = false;
+      row.onSelect = async () => { await showDrillDown(acc, "account", filtered); };
       table.addRow(row);
     });
   }
@@ -242,6 +249,7 @@ async function showDashboard(period) {
 
   // Actions
   addSection(table, "Actions");
+
   let cpRow = new UITableRow();
   cpRow.height = 44;
   let cpCell = cpRow.addText("Change Period");
@@ -257,6 +265,80 @@ async function showDashboard(period) {
   await table.present(false);
 }
 
+async function showDrillDown(filterValue, filterType, periodFiltered) {
+  let txs;
+  let title;
+  if (filterType === "category") {
+    txs = periodFiltered.filter(e => (e.category || "Uncategorized") === filterValue && (e.type === "debit" || (!e.type && e.amount > 0)));
+    title = filterValue;
+  } else {
+    txs = periodFiltered.filter(e => (e.account || "Default") === filterValue && (e.type === "debit" || (!e.type && e.amount > 0)));
+    title = acctName(filterValue);
+  }
+  txs.sort((a, b) => (b.date + (b.time || "")).localeCompare(a.date + (a.time || "")));
+
+  let dt = new UITable();
+  dt.showSeparators = true;
+
+  // Header
+  let hdr = new UITableRow();
+  hdr.isHeader = true;
+  hdr.height = 54;
+  let total = txs.reduce((s, e) => s + (e.amount || 0), 0);
+  let hdrCell = hdr.addText(title, txs.length + " txns \u2022 \u20B9" + fmt(total));
+  hdrCell.titleFont = Font.boldSystemFont(18);
+  hdrCell.subtitleFont = Font.systemFont(13);
+  hdrCell.subtitleColor = Color.gray();
+  dt.addRow(hdr);
+
+  // Top merchants in this drill-down
+  let merchTotals = {};
+  txs.forEach(e => {
+    let m = e.merchant || "Unknown";
+    merchTotals[m] = (merchTotals[m] || 0) + (e.amount || 0);
+  });
+  let topMerch = Object.entries(merchTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (topMerch.length > 1) {
+    addSection(dt, "Top Merchants");
+    topMerch.forEach(([m, t]) => {
+      let row = new UITableRow();
+      row.height = 36;
+      let nc = row.addText(m);
+      nc.titleFont = Font.systemFont(14);
+      nc.widthWeight = 65;
+      let ac = row.addText("\u20B9" + fmt(t));
+      ac.titleFont = Font.mediumSystemFont(14);
+      ac.rightAligned();
+      ac.widthWeight = 35;
+      dt.addRow(row);
+    });
+  }
+
+  // Transaction list
+  addSection(dt, "Transactions");
+  txs.forEach(tx => {
+    let row = new UITableRow();
+    row.height = 52;
+    let label = tx.merchant || tx.category || "Unknown";
+    let sub = friendlyDate(tx.date) + " " + (tx.time || "") + "  " + (filterType === "category" ? acctName(tx.account) : (tx.category || ""));
+    let nameCell = row.addText(label, sub);
+    nameCell.titleFont = Font.systemFont(15);
+    nameCell.subtitleFont = Font.systemFont(11);
+    nameCell.subtitleColor = Color.gray();
+    nameCell.widthWeight = 65;
+    let amtCell = row.addText("-\u20B9" + fmt(tx.amount));
+    amtCell.titleFont = Font.mediumSystemFont(15);
+    amtCell.titleColor = Color.red();
+    amtCell.rightAligned();
+    amtCell.widthWeight = 35;
+    row.dismissOnSelect = false;
+    row.onSelect = async () => { await editTx(tx); };
+    dt.addRow(row);
+  });
+
+  await dt.present(false);
+}
+
 async function editTx(tx) {
   let acctName = CONFIG.accounts && CONFIG.accounts[tx.account] ? CONFIG.accounts[tx.account].name : (tx.account || "Unknown");
   let a = new Alert();
@@ -266,6 +348,7 @@ async function editTx(tx) {
   a.addAction("Change Merchant");
   a.addAction("Change Amount");
   a.addAction("Change Account");
+  a.addAction("Change Date");
   a.addAction("Change Note");
   a.addDestructiveAction("Delete");
   a.addCancelAction("Cancel");
@@ -331,6 +414,22 @@ async function editTx(tx) {
       await save("Account updated");
     }
   } else if (idx === 4) {
+    let dtA = new Alert();
+    dtA.title = "Change Date";
+    dtA.message = "Current: " + (tx.date || "unknown") + "\nFormat: YYYY-MM-DD (e.g. 2026-05-04)";
+    dtA.addTextField("YYYY-MM-DD", tx.date || "");
+    dtA.addAction("Save");
+    dtA.addCancelAction("Cancel");
+    if ((await dtA.presentAlert()) === 0) {
+      let newDate = dtA.textFieldValue(0).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+        expenses[txIdx].date = newDate;
+        await save("Date updated");
+      } else {
+        let err = new Alert(); err.title = "Invalid format"; err.message = "Use YYYY-MM-DD (e.g. 2026-05-04)"; err.addAction("OK"); await err.presentAlert();
+      }
+    }
+  } else if (idx === 5) {
     let na = new Alert();
     na.title = "Note";
     na.addTextField("Note", tx.note || "");
@@ -340,7 +439,7 @@ async function editTx(tx) {
       expenses[txIdx].note = na.textFieldValue(0);
       await save("Note updated");
     }
-  } else if (idx === 5) {
+  } else if (idx === 6) {
     let da = new Alert();
     da.title = "Delete this transaction?";
     da.message = (tx.merchant || "Unknown") + " \u2014 \u20B9" + fmt(tx.amount);
